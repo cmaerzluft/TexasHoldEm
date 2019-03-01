@@ -1,16 +1,19 @@
 #########################################################################################################################
 #                                                                                                                       #
-#  Title:
-#  Author:
-#  Description:
-#  Last Edit:
+#  Title: Score a round of Texas Hold'em
+#  Author: Christopher Maerzluft
+#  Description: Returns the ranks of each hand in a given round of Texas Hold'em
+#  Last Edit: 10/08/18
 #                                                                                                                       #
 #########################################################################################################################
 score_TexasHoldEm <- function(round) {
+  # Pull values of Pocket Cards
   valu1 <- as.numeric(substr(round$pocket_card1, 2, 3))
   suit1 <- substr(round$pocket_card1, 1, 1)
   valu2 <- as.numeric(substr(round$pocket_card2, 2, 3))
   suit2 <- substr(round$pocket_card2, 1, 1)
+  
+  # Classify the pocket cards
   # Did the two cards contain a "high" card? i.e. Was it a 10 or better?
   round$high_pocket <- valu1 > 9 | valu2 > 9
   round$both_high_pocket <- valu1 > 9 & valu2 > 9
@@ -18,17 +21,19 @@ score_TexasHoldEm <- function(round) {
   round$suited_pocket <- suit1 == suit2
   # Were the two cards a pair
   round$paired_pocket <- valu1 == valu2
-  # Were the two cards close enough to help form a straight (while not being a pair). Need to count Ace as either 13 or 1
+  # Were the two cards close enough to help form a straight (while not being a pair). Need to count Ace as either 14 or 1
   # Flag where the aces are
   ace1 <- valu1 == 14
   ace2 <- valu2 == 14
   # Ace as high
   dist_try1 <- abs(valu1 - valu2)
-  # Switch to Ace as low
+  # Switch to Ace as low - don't use valui after this so we can change it and not worry about it
   valu1[ace1] <- 1
   valu2[ace2] <- 1
   dist_try2 <- abs(valu1 - valu2)
-  # Pull which ever combinations are the best chance of a straight
+  # Pull which ever combinations are the best chance of a straight - A 6 and 7 have a better chance of forming a straight
+  #   than a 10 and Ace because the 10 and Ace need Jack, Queen, King to make a straight but a 6, 7 can use 3, 4, 5 or
+  #   8, 9, 10 and certain combinations of those.
   round$value_distance <- pmin(dist_try1, dist_try2)
   # Cards are close enough to both help make a straight and not be a pair?
   round$straight_pocket <- round$value_distance < 5 & round$value_distance != 0
@@ -39,17 +44,22 @@ score_TexasHoldEm <- function(round) {
   round$hand_type <- ""
   round$hand_name <- ""
   score <- sapply(1:nrow(round), FUN = function(i1, round) {
-    # First, we look for specific combinations
+    # Pull values and suits
     hand_i <- as.character(round[i1, grep("card", colnames(round))])
     suit <- substr(hand_i, 1, 1)
     valu <- as.numeric(substr(hand_i, 2, 3))
     
+    # Find which combinations exist
     # Flush
     flush <- max(table(suit)) >= 5
-    # Straight - Need to treat Ace as both a 1 and a 13
+    # Straight
+    # Need to treat Ace as both a 1 and a 13
+    # Sort values, calculate difference between consecutive cards, then count groups of differences
     strai <- rle(diff(sort(valu)))
+    # if there is a group that had four ones consecutively that means there are five consecutive cards in a row
     straight <- any(strai$lengths >= 4 & strai$values == 1)
     ace_low <- FALSE
+    # The previous one assumed the ace was a 14 (worth one more than a King/13) - Try with ace as a 1
     if (any(valu == 14) & !straight) {
       tmp <- valu
       tmp[tmp == 14] <- 1
@@ -75,27 +85,28 @@ score_TexasHoldEm <- function(round) {
     }
     # Four of a kind
     four_of_a_kind <- max(table(valu)) == 4 & 
-      sum(straight_flush) == 0
+      sum(straight_flush) == 0 # Can't have a better hand
     # Full house
     full_house <- sum(table(valu) > 1) > 1 & max(table(valu)) == 3 & 
-      sum(four_of_a_kind, straight_flush) == 0
+      sum(four_of_a_kind, straight_flush) == 0 # Can't have a better hand
     # Flush
-    if (sum(full_house, four_of_a_kind, straight_flush) != 0) {
+    if (sum(full_house, four_of_a_kind, straight_flush) != 0) { # Can't have a better hand
       flush <- FALSE
     }
     # Straight
-    if (sum(flush, full_house, four_of_a_kind, straight_flush) != 0) {
+    if (sum(flush, full_house, four_of_a_kind, straight_flush) != 0) { # Can't have a better hand
       straight <- FALSE
     }
     # Three of a kind
     three_of_a_kind <- max(table(valu)) == 3 & 
-      sum(straight, flush, full_house, four_of_a_kind, straight_flush) == 0
+      sum(straight, flush, full_house, four_of_a_kind, straight_flush) == 0 # Can't have a better hand
     # Two pairs
     two_pair <- sum(table(valu) > 1) > 1 & max(table(valu)) == 2 & 
-      sum(three_of_a_kind, straight, flush, full_house, four_of_a_kind, straight_flush) == 0
+      sum(three_of_a_kind, straight, flush, full_house, four_of_a_kind, straight_flush) == 0 # Can't have a better hand
     # Pair
     pair <- max(table(valu)) == 2 & 
-      sum(two_pair, three_of_a_kind, straight, flush, full_house, four_of_a_kind, straight_flush) == 0
+      sum(two_pair, three_of_a_kind, straight, flush, full_house, four_of_a_kind, straight_flush) == 0 # Can't have a better hand
+    # All other hands are high cards
     
     # Choose best 5 cards and assign points
     if (straight_flush) {

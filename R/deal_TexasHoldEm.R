@@ -1,12 +1,13 @@
 #########################################################################################################################
 #                                                                                                                       #
-#  Title:
-#  Author:
-#  Description:
-#  Last Edit:
+#  Title: Deal Texas Hold'em
+#  Author: Christopher Maerzluft
+#  Description: A function for simulating a deal to the number of players at a table
+#  Last Edit: 10/08/18
 #                                                                                                                       #
 #########################################################################################################################
 deal_TexasHoldEm <- function(round, full_deck) {
+  # Deal 2 random cards to each player
   cards_dealt_in <- sample(nrow(full_deck), nrow(round)*2, replace = FALSE)
   pocket_cards <- data.frame(matrix(full_deck$hand_cd[cards_dealt_in], byrow = FALSE, nrow = nrow(round), ncol = 2))
   colnames(pocket_cards) <- c("pocket_card1", "pocket_card2")
@@ -47,8 +48,11 @@ deal_TexasHoldEm <- function(round, full_deck) {
   pocket_cards <- data.frame(matrix(final.deck$hand_cd[cards_dealt_in], byrow = TRUE, nrow = nrow(round), ncol = 1))
   colnames(pocket_cards) <- c("river_card")
   round <- cbind(round, pocket_cards)
-  # Remove dealt cards from deck
+  # Remove dealt cards from deck - don't need this one since we are done dealing but if we decide to return deck as well
+  #   in the future this will need to be here
   final.deck <- final.deck[-cards_dealt_in, ]
   
   return(round)
 }
+
+#########################################################################################################################
