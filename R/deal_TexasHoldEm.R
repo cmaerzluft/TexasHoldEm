@@ -3,10 +3,13 @@
 #  Title: Deal Texas Hold'em
 #  Author: Christopher Maerzluft
 #  Description: A function for simulating a deal to the number of players at a table
-#  Last Edit: 10/08/18
+#  Last Edit: 3/05/19
 #                                                                                                                       #
 #########################################################################################################################
 deal_TexasHoldEm <- function(round, full_deck) {
+  # Just as in regulation Hold'em we deal everyone a single card before going back and giving everyone else a second card.
+  #   This shouldn't really matter here because the cards are sampled as close to random as possible but we are including
+  #   it as a feature for completeness.
   # Deal 2 random cards to each player
   cards_dealt_in <- sample(nrow(full_deck), nrow(round)*2, replace = FALSE)
   pocket_cards <- data.frame(matrix(full_deck$hand_cd[cards_dealt_in], byrow = FALSE, nrow = nrow(round), ncol = 2))
@@ -54,5 +57,8 @@ deal_TexasHoldEm <- function(round, full_deck) {
   
   return(round)
 }
-
+#########################################################################################################################
+#########################################################################################################################
+#########################################################################################################################
+#########################################################################################################################
 #########################################################################################################################

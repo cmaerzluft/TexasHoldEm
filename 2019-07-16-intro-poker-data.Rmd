@@ -1,0 +1,39 @@
+---
+title: Texas Holdem. Intro to Data.
+author: Christopher Maerzluft
+date: '2019-07-16'
+slug: intro-poker-data
+categories: []
+tags: ['Texas HoldEm', 'Introduction', "Data"]
+header:
+  caption: ''
+  image: ''
+---
+
+## Poker! I Barely Know her!
+
+I recently listened to a story on the podcast for [Moth Radio Hour](https://themoth.org/stories/the-big-things-you-dont-do). The speaker, [Annie Duke](https://en.wikipedia.org/wiki/Annie_Duke), described how she came to be in a high stakes game of Texas Hold'em with nine of the other world's best poker players. If you aren't familiar with the Texas Hold'em you can find a nice summary of the game and its rules [here](http://www.wsop.com/poker-games/texas-holdem/). As a part of her story she mentioned that she first started playing poker when her [brother](https://en.wikipedia.org/wiki/Howard_Lederer), one of the other nine players at the high stakes game, encouraged her to start playing professionally. When she expressed hesitation he wrote on a small cocktail napkin a list of hands which she should focus on as she began to play. He said, "stick to these hands and you will be fine." In the podcast she didn't reveal what those hands were but this is the kind of problem data science is well ***suited*** (I already hate myself for saying that) to handle.  
+![](https://media1.tenor.com/images/4cfa9b4d02ae66bf35d64fe1846e385d/tenor.gif)
+  
+In fact, Texas Hold'em can be used to study every facet of data science if we wanted to. You most likely expect this post to be used to explore the concept of probability, the most fundamental part of statistics, but I am not going to do that for this specific post. Instead, I want to focus on something much more mundane but just as vital to any data scientist.
+
+### Data
+
+Yep, it's right there in the name. The joke within the data community is that data-science/statistics/economics/whatever-field-that-uses-data is actually only 10% analysis and 90% data cleaning and data management. All the probability knowledge in the world is useless to a data scientist without good data. As they say, "Garbage in, garbage out."
+
+Fortunately, finding good data really isn't a matter of whether it [exists](https://www.livescience.com/54094-how-big-is-the-internet.html) or not. The real question is, do you have the time and/or money to put it in the form you need to perform the analysis you want? As an environment rich with oppotunities of data analysis the topic of poker has an incredibly large amount of data, some of it free and some of it for a price. If you google "[texas holdem data](https://www.google.com/search?q=texas+holdem+data)" the first two links, a StackExchange [post](https://poker.stackexchange.com/questions/881/publicly-available-poker-stats) and a Kaggle [dataset](https://www.kaggle.com/smeilz/poker-holdem-games), are examples of great resources for finding data online. Now, we just need to decide if any of this data helps us answer which hands were on that napkin for Annie's story.
+
+Before we get to more complex analyses, I would like to build a naive understanding of the way Texas Hold'Em works. For the time being I want to know, if you take [betting strategy](http://www.firsttimepokerplayer.com/how-to-play/strategy/betting-guide/) ([game theory](https://math.mit.edu/~apost/courses/18.204_2018/Jingyu_Li_paper.pdf)) out of the equation which hands are more likely to win? In other words, how often do hands win when stacked up against every other hand. Unfortunately, none of the data in the links above are set up for this analysis. For one, I am cheap and don't want to pay for any data but another reason is that many of the free data sets only give data on hands that were revealed at the end of a round. So if someone went all in and everyone else folded, the data might not tell us what anyone, even the person who won the pot, had at all. When we turn to the more complex question this won't necessarily be a bad thing but for now we need to figure something else out. At this point there are only two alternatives; We can either turn this post around and go back to discussing probability and [combinatorics](http://mathforum.org/library/drmath/view/65306.html) or we can do something much more data science-y and just make everything up.
+![](https://media.giphy.com/media/m7DEwkk9ID7ag/giphy.gif)
+
+
+
+```{r}
+# Libraries Needed
+# library(knitr)
+# # Load Data
+# load("~/Desktop/Miscellaneous/Data Blog/TexasHoldEm/Data/simulated_100k_games.Rdata")
+# print(summary(games))
+```
+
+Talk to you soon.
