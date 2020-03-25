@@ -56,13 +56,13 @@ for (i1 in min_players:max_players) {
       hand_place = rank(desc(final_hand_points), ties.method = "min"),
       winner = hand_place == min(hand_place)
     )
-  
+
   #########################################################################################################################
   # Save Resuls ###########################################################################################################
   iters.chr <- gsub("000$", "k", iters)
   iters.chr <- gsub("000", "k", iters.chr)
   iters.chr <- gsub("kk$", "M", iters.chr)
-  filename <- paste("Data/", "sim", iters.chr, "games", "_", n.players, "players", ".Rdata", sep = "")
+  filename <- paste("data/", "sim", iters.chr, "games", "_", n.players, "players", ".Rdata", sep = "")
   save(games, file = filename)
   rm(games)
 }

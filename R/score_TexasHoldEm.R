@@ -1,42 +1,41 @@
-#########################################################################################################################
-#                                                                                                                       #
-#  Title: Score a round of Texas Hold'em
-#  Author: Christopher Maerzluft
-#  Description: Returns the ranks of each hand in a given round of Texas Hold'em
-#  Last Edit: 3/05/19
-#                                                                                                                       #
-#########################################################################################################################
-# Hand Rank - Description
-#         9 - Royal Flush (RF): Suited Ace high Straight (no tie breaker)
-#         8 - Straight Flush (SF): Suited Straight (highest card in straight breaks tie)
-#         7 - Four of a Kind (FK): Self explanatory (highest FK value breaks tie, highest 5th card breaks subsequent tie)
-#         6 - Full House (FH): TK and P together (highest TK value breaks tie, highest P breaks subsequent tie)
-#         5 - Flush (F): Suited hand (highest card breaks tie, highest 2nd card breaks subsequent tie, ..., highest 5th 
-#                         card breaks subsequent tie)
-#         4 - Straight (S): Five in a row (highest card in straight breaks tie)
-#         3 - Three of a Kind (TK): Self explanatory (highest TK value breaks tie, highest 4th card breaks subsequent tie,
-#                                   highest 5th card breaks subsequent tie)
-#         2 - Two Pair (TP): Self explanatory (highest pair determines win, highest 2nd pair breaks subsequent tie,
-#                             highest 5th card breaks subsequent tie)
-#         1 - Pair (P): Self explanatory (highest pair determines win, highest 3rd card breaks subsequent tie, highest 4th 
-#                       card breaks subsequent tie, highest 5th card breaks subsequent tie)
-#         0 - High card (HC): Self explanatory (highest card breaks tie, highest 2nd card breaks subsequent tie, ..., 
-#                             highest 5th card breaks subsequent tie)
-score_TexasHoldEm <- function(round) {
+#' Score a hand or hands of Texas Hold'em
+#'
+#' @description
+#' # Hand Rank - Description
+#' 9 - Royal Flush (RF): Suited Ace high Straight (no tie breaker)
+#' 8 - Straight Flush (SF): Suited Straight (highest card in straight breaks tie)
+#' 7 - Four of a Kind (FK): Self explanatory (highest FK value breaks tie, highest 5th card breaks subsequent tie)
+#' 6 - Full House (FH): TK and P together (highest TK value breaks tie, highest P breaks subsequent tie)
+#' 5 - Flush (F): Suited hand (highest card breaks tie, highest 2nd card breaks subsequent tie, ..., highest 5th
+#'     card breaks subsequent tie)
+#' 4 - Straight (S): Five in a row (highest card in straight breaks tie)
+#' 3 - Three of a Kind (TK): Self explanatory (highest TK value breaks tie, highest 4th card breaks subsequent tie,
+#'     highest 5th card breaks subsequent tie)
+#' 2 - Two Pair (TP): Self explanatory (highest pair determines win, highest 2nd pair breaks subsequent tie,
+#'     highest 5th card breaks subsequent tie)
+#' 1 - Pair (P): Self explanatory (highest pair determines win, highest 3rd card breaks subsequent tie, highest 4th
+#'     card breaks subsequent tie, highest 5th card breaks subsequent tie)
+#' 0 - High card (HC): Self explanatory (highest card breaks tie, highest 2nd card breaks subsequent tie, ...,
+#'     highest 5th card breaks subsequent tie)
+#' @param games a dealt hand of Texas Hold'Em from deal_TexasHoldEm
+#'
+#' @return Each hand is given a score based on their 7 cards available
+#' @export
+score_TexasHoldEm <- function(games) {
   # Pull values of Pocket Cards
-  valu1 <- as.numeric(substr(round$pocket_card1, 2, 3))
-  suit1 <- substr(round$pocket_card1, 1, 1)
-  valu2 <- as.numeric(substr(round$pocket_card2, 2, 3))
-  suit2 <- substr(round$pocket_card2, 1, 1)
-  
+  valu1 <- as.numeric(substr(games$pocket_card1, 2, 3))
+  suit1 <- substr(games$pocket_card1, 1, 1)
+  valu2 <- as.numeric(substr(games$pocket_card2, 2, 3))
+  suit2 <- substr(games$pocket_card2, 1, 1)
+
   # Classify the pocket cards for analysis later
   # Did the two cards contain a "high" card? i.e. Was it a 10 or better?
-  round$high_pocket <- valu1 > 9 | valu2 > 9
-  round$both_high_pocket <- valu1 > 9 & valu2 > 9
+  games$high_pocket <- valu1 > 9 | valu2 > 9
+  games$both_high_pocket <- valu1 > 9 & valu2 > 9
   # Did the two cards have a similar suit
-  round$suited_pocket <- suit1 == suit2
+  games$suited_pocket <- suit1 == suit2
   # Were the two cards a pair
-  round$paired_pocket <- valu1 == valu2
+  games$paired_pocket <- valu1 == valu2
   # Were the two cards close enough to help form a straight (while not being a pair). Need to count Ace as either 14 or 1
   # Flag where the aces are
   ace1 <- valu1 == 14
@@ -50,493 +49,375 @@ score_TexasHoldEm <- function(round) {
   # Pull which ever combinations are the best chance of a straight - A 6 and 7 have a better chance of forming a straight
   #   than a 10 and Ace because the 10 and Ace need Jack, Queen, King to make a straight but a 6, 7 can use 3, 4, 5 or
   #   8, 9, 10 and certain combinations of those.
-  round$value_distance <- pmin(dist_try1, dist_try2)
+  games$value_distance <- pmin(dist_try1, dist_try2)
   # Cards are close enough to both help make a straight and not be a pair?
-  round$straight_pocket <- round$value_distance < 5 & round$value_distance != 0
-  
-  # Final hand scores
-  # Our scoring system will use a number of 11 digits to determine the best hand. Each hand has a rank from 0 - 9 and 
-  #   each card has a value 01 - 14 (the Ace can be worth 01 or 14 depending on its use, numbers are worth face value, 
-  #   and Jack, Queen and King are worth 11, 12, and 13 respectively). For our system, you put the rank value first,
-  #   followed by the values used to determine the best hand based on the tie breaking schema outlined above. For example,
-  #   if a player had a two pair (for this example we will use a pair of 9's, a pair of 7's and their fifth card being a 
-  #   king), they would get: a rank score of 2, the next two numbers would be 09 and 09 (their highest pair), the following
-  #   two number would be 07 and 07, and finally they would have a 13 (for their king). This translates to a final score 
-  #   of 20,909,070,713. The highest score in a hand wins the round. If two people have the same score and it's the 
-  #   highest score, both are labeled as winners.
-  score <- function(round, ret) {
-    final_hand_points <- rep(0, nrow(round))
-    final_hand <- rep("", nrow(round))
-    hand_type <- rep("", nrow(round))
-    hand_name <- rep("", nrow(round))
-    
-    best_hand <- sapply(1:nrow(round), FUN = function(i1, round) {
-      # Pull values and suits for a given hand
-      hand_i <- as.character(round[i1, grep("card", colnames(round))])
-      suit <- substr(hand_i, 1, 1)
-      valu <- as.numeric(substr(hand_i, 2, 3))
-      
-      # Before going through and assigning a specific score to each hand, we first look to see what type of hand it is. We
-      #   do this because a hand can have multiple types (e.g. a full house can be a three of a kind or a pair as well).
-      #   Picking the hand first, allows us to make decide on one hand and keep the code that does this together and thus
-      #   easier to read/follow.
-      # Is there a flush?
-      flush <- max(table(suit)) >= 5
-      # Is there a Straight?
-      # Sort unique values, calculate difference between consecutive cards, then count groups of differences
-      strai <- rle(diff(sort(unique(valu))))
-      # We need a set of 4 or more differences that are only different by 1 value each
-      straight <- any(strai$lengths >= 4 & strai$values == 1)
-      ace_low <- FALSE # only used when looking at straights
-      # The previous one assumed the ace was a 14, need to try with ace as a 1. Only necessary if there is an Ace and there
-      #   isn't a straight already (since an Ace low straight is worth the least amount of points of the straights)
-      if (any(valu == 14) & !straight) {
-        tmp <- valu
-        tmp[tmp == 14] <- 1
-        strai <- rle(diff(sort(unique(tmp))))
-        straight <- any(strai$lengths >= 4 & strai$values == 1)
-        ace_low <- TRUE
-      }
-      # Is there a Straight Flush?
-      straight_flush <- FALSE
-      if (straight & flush) { # Need a straight and a flush individually for this to be TRUE
-        # Use only cards that can make a flush
-        flush_suit <- names(table(suit)[table(suit) == max(table(suit))])
-        if (ace_low) { # if using a low Ace look at it as a 1
-          valu_tmp <- as.numeric(gsub(14, 1, valu))
-          flush_valu <- valu_tmp[suit == flush_suit]
-        } else {
-          flush_valu <- valu[suit == flush_suit]
-        }
-        # Take the consecutive differences again (unique shouldn't be required since only one value of each card exists 
-        #   within a flush but if we moved to two+ decks this would be require). Turn differences not equal to 1 to TRUE
-        #   and differences equal to 1 to FALSE. We then start that vector with a 1 (this also converts T/F to 1/0) and
-        #   take the cumulative sum of that vector. This means that the four cards where the previous number was one less
-        #   than it will have values of 0 and when we add the cumulative sum, they won't change the sum creating a grouping
-        #   of 5 identical numbers. These are five consecutive values (i.e. a straight)
-        consec_init <- split(sort(unique(flush_valu)), cumsum(c(1, diff(sort(unique(flush_valu))) != 1)))
-        # Pull cards that make up the longest consecutive list
-        lengths <- lapply(consec_init, length)
-        longest <- which.max(lengths)
-        consec_init <- consec_init[[longest]]
-        # If we can make a straight using only values from cards in the flush we have a Straight Flush
-        if (length(consec_init) >= 5) {
-          straight_flush <- TRUE
-        } else {
-          straight_flush <- FALSE
-        }
-      }
-      # We only want to use the best hand available so from here on out we will also check to see if we found a better hand
-      #   already.
-      # Is there a Four of a kind
-      four_of_a_kind <- max(table(valu)) == 4 & 
-        sum(straight_flush) == 0 # Can't have a better hand
-      # Is there a Full house
-      full_house <- sum(table(valu) > 1) > 1 & max(table(valu)) == 3 & 
-        sum(four_of_a_kind, straight_flush) == 0 # Can't have a better hand
-      # Is there a Flush (already determined if one exists, just need to switch it to FALSE, if better hand exists)
-      if (sum(full_house, four_of_a_kind, straight_flush) != 0) { # Can't have a better hand
-        flush <- FALSE
-      }
-      # Is there a Straight (already determined if one exists, just need to switch it to FALSE, if better hand exists)
-      if (sum(flush, full_house, four_of_a_kind, straight_flush) != 0) { # Can't have a better hand
-        straight <- FALSE
-      }
-      # Is there a Three of a kind
-      three_of_a_kind <- max(table(valu)) == 3 & 
-        sum(straight, flush, full_house, four_of_a_kind, straight_flush) == 0 # Can't have a better hand
-      # Is there a Two pairs
-      two_pair <- sum(table(valu) > 1) > 1 & max(table(valu)) == 2 & 
-        sum(three_of_a_kind, straight, flush, full_house, four_of_a_kind, straight_flush) == 0 # Can't have a better hand
-      # Is there a Pair
-      pair <- max(table(valu)) == 2 & 
-        sum(two_pair, three_of_a_kind, straight, flush, full_house, four_of_a_kind, straight_flush) == 0 # Can't have a better hand
-      # All other hands are high cards
-      
-      # Now that we know what is the best hand that exists, we can score them using their specific score profile
-      if (straight_flush) {
-        # Hand Type Value
-        hand_value <- "8"
-        # Suit of the straight flush - the most common suit
-        flush_suit <- names(table(suit)[table(suit) == max(table(suit))])
-        # Cards of the straight flush - must come from flush suit
-        cards_tmp <- valu[suit == flush_suit]
-        # Find consecutive values
-        consec_init <- split(sort(unique(cards_tmp)), cumsum(c(1, diff(sort(unique(cards_tmp))) != 1)))
-        # Pull cards that make up the longest consecutive list
-        lengths <- lapply(consec_init, length)
-        longest <- which.max(lengths)
-        consec_init <- consec_init[[longest]]
-        consec_init <- sort(consec_init, decreasing = TRUE)
-        # Take care of ace low
-        if (length(consec_init) == 4 & ace_low) {
-          straight_valu <- c(consec_init, 1)
-        } else {
-          straight_valu <- consec_init[1:5]
-        }
-        # The best possible hand (a Royal Flush) is just an Ace High Straight Flush
-        if (max(straight_valu) == 14) {
-          hand_value <- "9"
-        }
-        # Top 5 Card Values
-        card1_value <- sprintf(straight_valu[1], fmt = "%02s")
-        card2_value <- sprintf(straight_valu[2], fmt = "%02s")
-        card3_value <- sprintf(straight_valu[3], fmt = "%02s")
-        card4_value <- sprintf(straight_valu[4], fmt = "%02s")
-        card5_value <- sprintf(straight_valu[5], fmt = "%02s")
-        # Top 5 Card Suits
-        card1_suit <- flush_suit
-        card2_suit <- flush_suit
-        card3_suit <- flush_suit
-        card4_suit <- flush_suit
-        card5_suit <- flush_suit
-        # Top 5 Cards
-        card1 <- paste(card1_suit, card1_value, sep = "") 
-        card2 <- paste(card2_suit, card2_value, sep = "") 
-        card3 <- paste(card3_suit, card3_value, sep = "") 
-        card4 <- paste(card4_suit, card4_value, sep = "") 
-        card5 <- paste(card5_suit, card5_value, sep = "")
-        # If an Ace is low, the score value is 01, but we still want to read it as a 14 in the card coding
-        card5 <- gsub("01", "14", card5)
-        # Hand Points
-        final_hand_points[i1] <<- as.numeric(
-          paste(hand_value, card1_value, card2_value, card3_value, card4_value, card5_value, sep = "")
-        )
-        # Final Hand
-        final_hand[i1] <<- paste(card1, card2, card3, card4, card5, sep = ", ")
-        # Hand Type Name
-        hand_type[i1] <<- "Straight Flush"
-        # Hand Name
-        if (hand_value == "9") {
-          hand_name[i1] <<- "Royal Flush"
-        } else {
-          hand_name[i1] <<- paste("Straight Flush -", max(straight_valu), "High", sep = " ")
-        }
-      } else if (four_of_a_kind) {
-        # Hand Type Value
-        hand_value <- "7"
-        # Find value that appears four times
-        four_valu <- as.numeric(names(table(valu)[table(valu) == 4]))
-        # Find best card not in the four
-        fifth_valu <- max(valu[which(valu != four_valu)])[1]
-        # Top 5 Card Values
-        card1_value <- sprintf(four_valu, fmt = "%02s")
-        card2_value <- sprintf(four_valu, fmt = "%02s")
-        card3_value <- sprintf(four_valu, fmt = "%02s")
-        card4_value <- sprintf(four_valu, fmt = "%02s")
-        card5_value <- sprintf(fifth_valu, fmt = "%02s")
-        # Top 5 Card Suits
-        card1_suit <- suit[valu %in% four_valu][1]
-        card2_suit <- suit[valu %in% four_valu][2]
-        card3_suit <- suit[valu %in% four_valu][3]
-        card4_suit <- suit[valu %in% four_valu][4]
-        card5_suit <- suit[valu %in% fifth_valu][1]
-        # Top 5 Cards
-        card1 <- paste(card1_suit, card1_value, sep = "") 
-        card2 <- paste(card2_suit, card2_value, sep = "") 
-        card3 <- paste(card3_suit, card3_value, sep = "") 
-        card4 <- paste(card4_suit, card4_value, sep = "") 
-        card5 <- paste(card5_suit, card5_value, sep = "")
-        # Hand Points
-        final_hand_points[i1] <<- as.numeric(
-          paste(hand_value, card1_value, card2_value, card3_value, card4_value, card5_value, sep = "")
-        )
-        # Final Hand
-        final_hand[i1] <<- paste(card1, card2, card3, card4, card5, sep = ", ")
-        # Hand Type Name
-        hand_type[i1] <<- "Four of a Kind"
-        # Hand Name
-        hand_name[i1] <<- paste("Four of a Kind - ", four_valu, "'s", sep = "")
-      } else if (full_house) {
-        # Hand Type Value
-        hand_value <- "6"
-        # Find the three of a kind
-        trips_valu <- as.numeric(names(table(valu)[table(valu) == 3]))
-        # If more than 1 three of a kind choose the highest valued as the three and the lowest value as the pair
-        if (length(trips_valu) > 1) {
-          pair_valu <- min(trips_valu)[1]
-          trips_valu <- max(trips_valu)[1]
-        } else {
-          # If only one three of a kind, find the highest pair value
-          pair_valu <- names(table(valu)[table(valu) == 2])
-          pair_valu <- max(as.numeric(pair_valu))[1]
-        }
-        # Top 5 Card Values
-        card1_value <- sprintf(trips_valu, fmt = "%02s")
-        card2_value <- sprintf(trips_valu, fmt = "%02s")
-        card3_value <- sprintf(trips_valu, fmt = "%02s")
-        card4_value <- sprintf(pair_valu, fmt = "%02s")
-        card5_value <- sprintf(pair_valu, fmt = "%02s")
-        # Top 5 Card Suits
-        card1_suit <- suit[valu %in% trips_valu][1]
-        card2_suit <- suit[valu %in% trips_valu][2]
-        card3_suit <- suit[valu %in% trips_valu][3]
-        card4_suit <- suit[valu %in% pair_valu][1]
-        card5_suit <- suit[valu %in% pair_valu][2]
-        # Top 5 Cards
-        card1 <- paste(card1_suit, card1_value, sep = "") 
-        card2 <- paste(card2_suit, card2_value, sep = "") 
-        card3 <- paste(card3_suit, card3_value, sep = "") 
-        card4 <- paste(card4_suit, card4_value, sep = "") 
-        card5 <- paste(card5_suit, card5_value, sep = "")
-        # Hand Points
-        final_hand_points[i1] <<- as.numeric(
-          paste(hand_value, card1_value, card2_value, card3_value, card4_value, card5_value, sep = "")
-        )
-        # Final Hand
-        final_hand[i1] <<- paste(card1, card2, card3, card4, card5, sep = ", ")
-        # Hand Type Name
-        hand_type[i1] <<- "Full House"
-        # Hand Name
-        hand_name[i1] <<- paste(trips_valu, "'s Full of ", pair_valu, "'s", sep = "")
-      } else if (flush) {
-        # Hand Type Value
-        hand_value <- "5"
-        # Suit of the flush - the most common suit
-        flush_suit <- names(table(suit)[table(suit) == max(table(suit))])
-        flush_valu <- sort(valu[suit == flush_suit], decreasing = TRUE)
-        flush_valu <- flush_valu[1:5]
-        # Top 5 Card Values
-        card1_value <- sprintf(flush_valu[1], fmt = "%02s")
-        card2_value <- sprintf(flush_valu[2], fmt = "%02s")
-        card3_value <- sprintf(flush_valu[3], fmt = "%02s")
-        card4_value <- sprintf(flush_valu[4], fmt = "%02s")
-        card5_value <- sprintf(flush_valu[5], fmt = "%02s")
-        # Top 5 Card Suits
-        card1_suit <- flush_suit
-        card2_suit <- flush_suit
-        card3_suit <- flush_suit
-        card4_suit <- flush_suit
-        card5_suit <- flush_suit
-        # Top 5 Cards
-        card1 <- paste(card1_suit, card1_value, sep = "") 
-        card2 <- paste(card2_suit, card2_value, sep = "") 
-        card3 <- paste(card3_suit, card3_value, sep = "") 
-        card4 <- paste(card4_suit, card4_value, sep = "") 
-        card5 <- paste(card5_suit, card5_value, sep = "")
-        # Hand Points
-        final_hand_points[i1] <<- as.numeric(
-          paste(hand_value, card1_value, card2_value, card3_value, card4_value, card5_value, sep = "")
-        )
-        # Final Hand
-        final_hand[i1] <<- paste(card1, card2, card3, card4, card5, sep = ", ")
-        # Hand Type Name
-        hand_type[i1] <<- "Flush"
-        # Hand Name
-        hand_name[i1] <<- paste("Flush -", as.numeric(card1_value), "High", sep = " ")
-      } else if (straight) {
-        # Hand Type Value
-        hand_value <- "4"
-        # Find consecutive values
-        consec_init <- split(sort(unique(valu)), cumsum(c(1, diff(sort(unique(valu))) != 1)))
-        # Pull cards that make up the longest consecutive list
-        lengths <- lapply(consec_init, length)
-        longest <- which.max(lengths)
-        consec_init <- consec_init[[longest]]
-        consec_init <- sort(consec_init, decreasing = TRUE)
-        # Take care of ace low
-        if (length(consec_init) == 4 & ace_low) {
-          straight_valu <- c(consec_init, 1)
-          straight_suit <- suit[match(c(consec_init, 14), valu)]
-        } else {
-          straight_valu <- consec_init[1:5]
-          straight_suit <- suit[match(straight_valu, valu)]
-        }
-        # Top 5 Card Values
-        card1_value <- sprintf(straight_valu[1], fmt = "%02s")
-        card2_value <- sprintf(straight_valu[2], fmt = "%02s")
-        card3_value <- sprintf(straight_valu[3], fmt = "%02s")
-        card4_value <- sprintf(straight_valu[4], fmt = "%02s")
-        card5_value <- sprintf(straight_valu[5], fmt = "%02s")
-        # Top 5 Card Suits
-        card1_suit <- straight_suit[1]
-        card2_suit <- straight_suit[2]
-        card3_suit <- straight_suit[3]
-        card4_suit <- straight_suit[4]
-        card5_suit <- straight_suit[5]
-        # Top 5 Cards
-        card1 <- paste(card1_suit, card1_value, sep = "") 
-        card2 <- paste(card2_suit, card2_value, sep = "") 
-        card3 <- paste(card3_suit, card3_value, sep = "") 
-        card4 <- paste(card4_suit, card4_value, sep = "") 
-        card5 <- paste(card5_suit, card5_value, sep = "")
-        card5 <- gsub("01", "14", card5)
-        # Hand Points
-        final_hand_points[i1] <<- as.numeric(
-          paste(hand_value, card1_value, card2_value, card3_value, card4_value, card5_value, sep = "")
-        )
-        # Final Hand
-        final_hand[i1] <<- paste(card1, card2, card3, card4, card5, sep = ", ")
-        # Hand Type Name
-        hand_type[i1] <<- "Straight"
-        # Hand Name
-        hand_name[i1] <<- paste("Straight -", as.numeric(card1_value), "High", sep = " ")
-      } else if (three_of_a_kind) {
-        # Hand Type Value
-        hand_value <- "3"
-        # Find the Three of a Kind
-        trip_valu <- names(table(valu)[table(valu) == 3])
-        not_trip <- sort(valu[!valu %in% trip_valu], decreasing = TRUE)
-        not_trip <- not_trip[1:2]
-        # Top 5 Card Values
-        card1_value <- sprintf(trip_valu, fmt = "%02s")
-        card2_value <- sprintf(trip_valu, fmt = "%02s")
-        card3_value <- sprintf(trip_valu, fmt = "%02s")
-        card4_value <- sprintf(not_trip[1], fmt = "%02s")
-        card5_value <- sprintf(not_trip[2], fmt = "%02s")
-        # Top 5 Card Suits
-        card1_suit <- suit[valu %in% trip_valu][1]
-        card2_suit <- suit[valu %in% trip_valu][2]
-        card3_suit <- suit[valu %in% trip_valu][3]
-        card4_suit <- suit[valu %in% not_trip[1]]
-        card5_suit <- suit[valu %in% not_trip[2]]
-        # Top 5 Cards
-        card1 <- paste(card1_suit, card1_value, sep = "") 
-        card2 <- paste(card2_suit, card2_value, sep = "") 
-        card3 <- paste(card3_suit, card3_value, sep = "") 
-        card4 <- paste(card4_suit, card4_value, sep = "") 
-        card5 <- paste(card5_suit, card5_value, sep = "")
-        # Hand Points
-        final_hand_points[i1] <<- as.numeric(
-          paste(hand_value, card1_value, card2_value, card3_value, card4_value, card5_value, sep = "")
-        )
-        # Final Hand
-        final_hand[i1] <<- paste(card1, card2, card3, card4, card5, sep = ", ")
-        # Hand Type Name
-        hand_type[i1] <<- "Three of a Kind"
-        # Hand Name
-        hand_name[i1] <<- paste("Three of a Kind - ", trip_valu, "'s", sep = "")
-      } else if (two_pair) {
-        # Hand Type Value
-        hand_value <- "2"
-        # Find the Pairs
-        pairs_valu <- names(table(valu)[table(valu) == 2])
-        pairs_valu <- sort(as.numeric(pairs_valu), decreasing = TRUE)
-        pairs_valu <- pairs_valu[1:2]
-        not_pairs <- max(valu[!valu %in% pairs_valu])[1]
-        # Top 5 Card Values
-        card1_value <- sprintf(pairs_valu[1], fmt = "%02s")
-        card2_value <- sprintf(pairs_valu[1], fmt = "%02s")
-        card3_value <- sprintf(pairs_valu[2], fmt = "%02s")
-        card4_value <- sprintf(pairs_valu[2], fmt = "%02s")
-        card5_value <- sprintf(not_pairs[1], fmt = "%02s")
-        # Top 5 Card Suits
-        card1_suit <- suit[valu %in% pairs_valu[1]][1]
-        card2_suit <- suit[valu %in% pairs_valu[1]][2]
-        card3_suit <- suit[valu %in% pairs_valu[2]][1]
-        card4_suit <- suit[valu %in% pairs_valu[2]][2]
-        card5_suit <- suit[valu == not_pairs[1]][1]
-        # Top 5 Cards
-        card1 <- paste(card1_suit, card1_value, sep = "") 
-        card2 <- paste(card2_suit, card2_value, sep = "") 
-        card3 <- paste(card3_suit, card3_value, sep = "") 
-        card4 <- paste(card4_suit, card4_value, sep = "") 
-        card5 <- paste(card5_suit, card5_value, sep = "")
-        # Hand Points
-        final_hand_points[i1] <<- as.numeric(
-          paste(hand_value, card1_value, card2_value, card3_value, card4_value, card5_value, sep = "")
-        )
-        # Final Hand
-        final_hand[i1] <<- paste(card1, card2, card3, card4, card5, sep = ", ")
-        # Hand Type Name
-        hand_type[i1] <<- "Two Pair"
-        # Hand Name
-        hand_name[i1] <<- paste("Pair of ", as.numeric(pairs_valu[1]), "'s and ", as.numeric(pairs_valu[2]), "'s", sep = "")
-      } else if (pair) {
-        # Hand Type Value
-        hand_value <- "1"
-        # Find the Pair
-        pair_valu <- names(table(valu)[table(valu) == 2])
-        not_pair <- sort(valu[!valu %in% pair_valu], decreasing = TRUE)
-        not_pair <- not_pair[1:3]
-        # Top 5 Card Values
-        card1_value <- sprintf(pair_valu, fmt = "%02s")
-        card2_value <- sprintf(pair_valu, fmt = "%02s")
-        card3_value <- sprintf(not_pair[1], fmt = "%02s")
-        card4_value <- sprintf(not_pair[2], fmt = "%02s")
-        card5_value <- sprintf(not_pair[3], fmt = "%02s")
-        # Top 5 Card Suits
-        card1_suit <- suit[valu == pair_valu][1]
-        card2_suit <- suit[valu == pair_valu][2]
-        card3_suit <- suit[valu == not_pair[1]]
-        card4_suit <- suit[valu == not_pair[2]]
-        card5_suit <- suit[valu == not_pair[3]]
-        # Top 5 Cards
-        card1 <- paste(card1_suit, card1_value, sep = "") 
-        card2 <- paste(card2_suit, card2_value, sep = "") 
-        card3 <- paste(card3_suit, card3_value, sep = "") 
-        card4 <- paste(card4_suit, card4_value, sep = "") 
-        card5 <- paste(card5_suit, card5_value, sep = "")
-        # Hand Points
-        final_hand_points[i1] <<- as.numeric(
-          paste(hand_value, card1_value, card2_value, card3_value, card4_value, card5_value, sep = "")
-        )
-        # Final Hand
-        final_hand[i1] <<- paste(card1, card2, card3, card4, card5, sep = ", ")
-        # Hand Type Name
-        hand_type[i1] <<- "Pair"
-        # Hand Name
-        hand_name[i1] <<- paste("Pair of ", as.numeric(pair_valu), "'s", sep = "")
-      } else {
-        # Hand Type Value
-        hand_value <- "0"
-        # Top 5 Card Values
-        card1_value <- sprintf(sort(valu, decreasing = TRUE)[1], fmt = "%02s")
-        card2_value <- sprintf(sort(valu, decreasing = TRUE)[2], fmt = "%02s")
-        card3_value <- sprintf(sort(valu, decreasing = TRUE)[3], fmt = "%02s")
-        card4_value <- sprintf(sort(valu, decreasing = TRUE)[4], fmt = "%02s")
-        card5_value <- sprintf(sort(valu, decreasing = TRUE)[5], fmt = "%02s")
-        # Top 5 Card Suits
-        card1_suit <- suit[order(valu, decreasing = TRUE)][1]
-        card2_suit <- suit[order(valu, decreasing = TRUE)][2]
-        card3_suit <- suit[order(valu, decreasing = TRUE)][3]
-        card4_suit <- suit[order(valu, decreasing = TRUE)][4]
-        card5_suit <- suit[order(valu, decreasing = TRUE)][5]
-        # Top 5 Cards
-        card1 <- paste(card1_suit, card1_value, sep = "") 
-        card2 <- paste(card2_suit, card2_value, sep = "") 
-        card3 <- paste(card3_suit, card3_value, sep = "") 
-        card4 <- paste(card4_suit, card4_value, sep = "") 
-        card5 <- paste(card5_suit, card5_value, sep = "")
-        # Hand Points
-        final_hand_points[i1] <<- as.numeric(
-          paste(hand_value, card1_value, card2_value, card3_value, card4_value, card5_value, sep = "")
-        )
-        # Final Hand
-        final_hand[i1] <<- paste(card1, card2, card3, card4, card5, sep = ", ")
-        # Hand Type Name
-        hand_type[i1] <<- "High Card"
-        # Hand Name
-        hand_name[i1] <<- paste(as.numeric(card1_value), "High", sep = " ")
-      }
-      
-    }, round = round)
-    
-    if (ret == "flop") {
-      return(data.frame(flop_hand = final_hand, flop_hand_type = hand_type, 
-                        flop_hand_name = hand_name, flop_hand_points = final_hand_points))
-    } else if (ret == "turn") {
-      return(data.frame(turn_hand = final_hand, turn_hand_type = hand_type, 
-                        turn_hand_name = hand_name, turn_hand_points = final_hand_points))
-    } else if (ret == "river") {
-      return(data.frame(final_hand = final_hand, final_hand_type = hand_type, 
-                        final_hand_name = hand_name, final_hand_points = final_hand_points))
+  games$straight_pocket <- games$value_distance < 5 & games$value_distance != 0
+
+  score <- function(dealt_cards, stage = "river", verbose = FALSE) {
+    ### Helping Functions ###
+    # Find Flush Suit (NA if no flush)
+    find_flush_suit <- function(suits) {
+      freq <- sort(table(suits), decreasing = TRUE)
+
+      return(
+        ifelse(max(freq) >= 5, names(freq[1]), NA)
+      )
     }
+    # Find highest card in straight (NA if no straight)
+    find_straight_top <- function(values) {
+      # sort removes NA automatically
+      straights <- cumsum(c(1, diff(sort(unique(values))) != 1))
+      chk <- rle(straights)
+      if (any(chk$lengths >= 5)) {
+        consec_init <- split(sort(unique(values)), straights)
+        lengths <- lapply(consec_init, length)
+        longest <- which.max(lengths)
+        st <- max(consec_init[[longest]])
+      } else if (any(values %in% 14) & any(chk$lengths == 4)) {
+        values[values == 14] <- 1
+        st <- find_straight_top(values)
+      } else {
+        st <- NA
+      }
+
+      return(st)
+    }
+    # Find four of a kind (NA if no quads)
+    find_quads <- function(values) {
+      freq <- table(values)
+
+      return(
+        ifelse(any(freq == 4), max(as.integer(names(freq)[freq == 4])), NA)
+      )
+    }
+    # Find top 2 three of a kind
+    find_trips <- function(values) {
+      # Pull Values for all three of a kinds in order of value
+      freq <- table(values)
+      trips <- sort(as.integer(names(freq)[freq == 3]), decreasing = TRUE)
+
+      # Pull the one with the most value first
+      trip.top <- ifelse(length(trips) >= 1, trips[1], NA)
+      # If more than one three of a kind, pull the second highest value
+      trip.bot <- ifelse(length(trips) >= 2, trips[2], NA)
+
+      return(
+        c(trip.top, trip.bot)
+      )
+    }
+    # Find top 2 pairs
+    find_pairs <- function(values) {
+      # Pull Values for all three of a kinds in order of value
+      freq <- table(values)
+      dubs <- sort(as.integer(names(freq)[freq == 2]), decreasing = TRUE)
+
+      # Pull the one with the most value first
+      dub.top <- ifelse(length(dubs) >= 1, dubs[1], NA)
+      # If more than one three of a kind, pull the second highest value
+      dub.bot <- ifelse(length(dubs) >= 2, dubs[2], NA)
+
+      return(
+        c(dub.top, dub.bot)
+      )
+    }
+
+    ### Prep game ###
+    suit1 <- apply(dealt_cards, MARGIN = 2, FUN = function(x) substr(x, 1, 1))
+    valu1 <- apply(dealt_cards, MARGIN = 2, FUN = function(x) as.numeric(substr(x, 2, 3)))
+    cards <- list(card = dealt_cards, suit = suit1, value = valu1)
+
+    ### Prep results data ###
+    final_info <- data.frame(
+      final_hand_points = rep(0, nrow(cards$card)),
+      final_hand = rep("", nrow(cards$card)),
+      hand_type = rep("", nrow(cards$card)),
+      hand_name = rep("", nrow(cards$card))
+    )
+
+    ### Straight Flush ###
+    if (verbose) {print("Start Calculations")}
+    # Requires to know if flush exists and straight exists first
+    fl_suit <- apply(cards$suit, MARGIN = 1, FUN = find_flush_suit)
+    st_top <- apply(cards$value, MARGIN = 1, find_straight_top)
+    sf_pot <- !is.na(fl_suit) & !is.na(st_top)
+    st_fl_top <- rep(NA_integer_, nrow(cards$suit))
+    if (any(sf_pot)) {
+      # Only use values that are part of the flush
+      tmpry_v <- cards$value[sf_pot, , drop = FALSE]
+      tmpry_s <- cards$suit[sf_pot, , drop = FALSE]
+      n_cols <- ncol(tmpry_s)
+      valid_cards <- matrix(rep(fl_suit[sf_pot], n_cols), ncol = n_cols)
+      tmpry_v[tmpry_s != valid_cards] <- NA
+      st_fl_top[sf_pot] <- apply(tmpry_v, MARGIN = 1, find_straight_top)
+
+      st_fl_found <- !is.na(st_fl_top)
+      st_top[st_fl_found] <- NA
+
+      final_info[st_fl_found, ] <- do.call(rbind, lapply(seq_along(st_fl_top[st_fl_found]), FUN = function(x, high, suit) {
+        hand_val <- ifelse(high[x] == 14, "09", "08")
+        values <- sprintf(high[x]:(high[x] - 4), fmt = "%02s")
+        fin_points <- as.numeric(paste(c(hand_val, values), collapse = ""))
+        values <- ifelse(values == "01", "14", values)
+        fin_cards <- paste(paste(suit[x], values, sep = ""), collapse = ", ")
+        hand_type <- "Straight Flush"
+        hand_name <- ifelse(high[x] == 14, "Royal Flush", paste("Straight Flush -", high[x], "High", sep = " "))
+
+        data.frame(final_hand_points = fin_points, final_hand = fin_cards, hand_type = hand_type, hand_name = hand_name)
+      }, high = st_fl_top[st_fl_found], suit = fl_suit[st_fl_found]))
+    }
+    not_done <- is.na(st_fl_top)
+    if (verbose) {print(sum(not_done))}
+
+    ### Four of a Kind ###
+    quads <- rep(NA_integer_, nrow(cards$value))
+    quads[not_done] <- apply(cards$value[not_done, ], MARGIN = 1, find_quads)
+    quads_found <- !is.na(quads)
+    final_info[quads_found, ] <- do.call(rbind, lapply(seq_along(quads[quads_found]), FUN = function(x, qua, val, sui) {
+      hand_val <- "07"
+      if (!is.null(dim(val))) {
+        kicker <- max(val[x,][val[x,] != qua[x]])
+        kick_suit <- sui[x, val[x, ] == kicker][1]
+      } else {
+        kicker <- max(val[x][val[x] != qua[x]])
+        kick_suit <- sui[val == kicker][1]
+      }
+      values <- sprintf(c(rep(qua[x], 4), kicker), fmt = "%02s")
+      fin_points <- as.numeric(paste(c(hand_val, values), collapse = ""))
+      fin_cards <- paste(paste(c("H", "D", "C", "S", kick_suit), values, sep = ""), collapse = ", ")
+      hand_type <- "Four of a Kind"
+      hand_name <- paste("Four of a Kind - ", qua[x], "'s", sep = "")
+      data.frame(final_hand_points = fin_points, final_hand = fin_cards, hand_type = hand_type, hand_name = hand_name)
+    }, qua = quads[quads_found], val = cards$value[quads_found, ], sui = cards$suit[quads_found, ]))
+    not_done <- not_done & is.na(quads)
+    if (verbose) {print(sum(not_done))}
+
+    ### Full House ###
+    trips <- matrix(rep(NA_integer_, nrow(cards$value)*2), nrow = 2)
+    pairs <- matrix(rep(NA_integer_, nrow(cards$value)*2), nrow = 2)
+    flhs_top <- rep(NA_integer_, nrow(cards$value))
+    flhs_bot <- rep(NA_integer_, nrow(cards$value))
+    trips[, not_done] <- apply(cards$value[not_done, ], MARGIN = 1, find_trips)
+    pairs[, not_done] <- apply(cards$value[not_done, ], MARGIN = 1, find_pairs)
+    num_trips <- colSums(!is.na(trips))
+    num_dubs <- colSums(!is.na(pairs))
+
+    flhs_pot <- (num_trips >= 2) | (num_trips >= 1 & num_dubs >= 1)
+    if (any(flhs_pot)) {
+      flhs_top[flhs_pot] <- trips[1, flhs_pot]
+      flhs_bot[flhs_pot] <- ifelse(!is.na(trips[2, flhs_pot]), trips[2, flhs_pot], pairs[1, flhs_pot])
+
+
+      flhs_found <- !is.na(flhs_top)
+
+      final_info[flhs_found, ] <- do.call(rbind, lapply(seq_along(flhs_top[flhs_found]), FUN = function(x, tri, dub, val, sui) {
+        hand_val <- "06"
+        values <- c(rep(tri[x], 3), rep(dub[x], 2))
+        if (!is.null(dim(val))) {
+          tri_suits <- sui[x, val[x, ] == tri[x]][1:3]
+          dub_suits <- sui[x, val[x, ] == dub[x]][1:2]
+        } else {
+          tri_suits <- sui[val == tri[x]][1:3]
+          dub_suits <- sui[val == dub[x]][1:2]
+        }
+        values <- sprintf(c(rep(tri[x], 3), rep(dub[x], 2)), fmt = "%02s")
+        fin_points <- as.numeric(paste(c(hand_val, values), collapse = ""))
+        fin_cards <- paste(c(paste(tri_suits, values[1:3], sep = ""), paste(dub_suits, values[4:5], sep = "")), collapse = ", ")
+        hand_type <- "Full House"
+        hand_name <- paste(tri[x], "'s Full of ", dub[x], "'s", sep = "")
+
+        data.frame(final_hand_points = fin_points, final_hand = fin_cards, hand_type = hand_type, hand_name = hand_name)
+      }, tri = flhs_top[flhs_found], dub = flhs_bot[flhs_found], val = cards$value[flhs_found, ], sui = cards$suit[flhs_found, ]))
+    }
+    trips <- trips[1, , drop = TRUE]
+    trips[!is.na(flhs_top)] <- NA
+    not_done <- not_done & is.na(flhs_top)
+    if (verbose) {print(sum(not_done))}
+
+    ### Flush ###
+    flushs <- rep(NA_integer_, nrow(cards$value))
+    flushs[not_done] <- fl_suit[not_done]
+
+    flushs_found <- !is.na(flushs)
+    final_info[flushs_found, ] <- do.call(rbind, lapply(seq_along(flushs[flushs_found]), FUN = function(x, flu, val, sui) {
+      hand_val <- "05"
+      if (!is.null(dim(val))) {
+        fl_cards <- sort(val[x,][sui[x, ] == flu[x]], decreasing = TRUE)[1:5]
+      } else {
+        print(val)
+        fl_cards <- sort(val[sui == flu[x]], decreasing = TRUE)[1:5]
+      }
+      values <- sprintf(fl_cards, fmt = "%02s")
+      fin_points <- as.numeric(paste(c(hand_val, values), collapse = ""))
+      fin_cards <- paste(paste(flu[x], values, sep = ""), collapse = ", ")
+      hand_type <- "Flush"
+      hand_name <- paste("Flush -", max(fl_cards), "High", sep = " ")
+      data.frame(final_hand_points = fin_points, final_hand = fin_cards, hand_type = hand_type, hand_name = hand_name)
+    }, flu = flushs[flushs_found], val = cards$value[flushs_found, ], sui = cards$suit[flushs_found, ]))
+    not_done <- not_done & is.na(flushs)
+    if (verbose) {print(sum(not_done))}
+
+    ### Straight ###
+    straights <- rep(NA_integer_, nrow(cards$value))
+    straights[not_done] <- st_top[not_done]
+
+    straights_found <- !is.na(straights)
+    final_info[straights_found, ] <- do.call(rbind, lapply(seq_along(straights[straights_found]), FUN = function(x, top, val, sui) {
+      hand_val <- "04"
+      if (!is.null(dim(val))) {
+        vals <- top[x]:(top[x] - 4)
+        face <- vals
+        face <- ifelse(face == 1, 14, face)
+        st_suits <- sui[x, ][match(x = face, table = val[x, ])]
+      } else {
+        vals <- top:(top - 4)
+        face <- vals
+        face <- ifelse(face == 1, 14, face)
+        st_suits <- sui[match(x = face, table = val)]
+      }
+      values <- sprintf(vals, fmt = "%02s")
+      fin_points <- as.numeric(paste(c(hand_val, values), collapse = ""))
+      values <- sprintf(face, fmt = "%02s")
+      fin_cards <- paste(paste(st_suits, values, sep = ""), collapse = ", ")
+      hand_type <- "Straight"
+      hand_name <- paste("Straight -", max(vals), "High", sep = " ")
+      data.frame(final_hand_points = fin_points, final_hand = fin_cards, hand_type = hand_type, hand_name = hand_name)
+    }, top = straights[straights_found], val = cards$value[straights_found, ], sui = cards$suit[straights_found, ]))
+    not_done <- not_done & is.na(straights)
+    if (verbose) {print(sum(not_done))}
+
+    ### Three of a Kind ###
+    triples <- rep(NA_integer_, nrow(cards$value))
+    triples[not_done] <- trips[not_done]
+    triples_found <- !is.na(triples)
+
+    final_info[triples_found, ] <- do.call(rbind, lapply(seq_along(triples[triples_found]), FUN = function(x, three, val, sui) {
+      hand_val <- "03"
+      if (!is.null(dim(val))) {
+        three <- three[x]
+        tri_su <- sui[x, ][val[x, ] == three]
+        kickers <- sort(val[x, ][val[x, ] != three], decreasing = TRUE)[1:2]
+        kick_suits <- sui[x, ][match(x = kickers, table = val[x, ])][1:2]
+      } else {
+        tri_su <- sui[val == three]
+        kickers <- sort(val[val != three], decreasing = TRUE)[1:2]
+        kick_suits <- sui[match(x = kickers, table = val)][1:2]
+      }
+      values <- sprintf(c(rep(three, 3), kickers), fmt = "%02s")
+      fin_points <- as.numeric(paste(c(hand_val, values), collapse = ""))
+      fin_cards <- paste(c(paste(tri_su, values[1:3], sep = ""), paste(kick_suits, values[4:5], sep = "")), collapse = ", ")
+      hand_type <- "Three of a Kind"
+      hand_name <- paste("Three of a Kind - ", three, "'s", sep = "")
+      data.frame(final_hand_points = fin_points, final_hand = fin_cards, hand_type = hand_type, hand_name = hand_name)
+    }, three = triples[triples_found], val = cards$value[triples_found, ], sui = cards$suit[triples_found, ]))
+    not_done <- not_done & is.na(triples)
+    if (verbose) {print(sum(not_done))}
+
+    ### Two Pair ###
+    topr_top <- rep(NA_integer_, nrow(cards$value))
+    topr_bot <- rep(NA_integer_, nrow(cards$value))
+    topr_pot <- num_trips == 0 & num_dubs >= 2 & not_done
+    if (any(topr_pot)) {
+      topr_top[topr_pot] <- pairs[1, topr_pot]
+      topr_bot[topr_pot] <- pairs[2, topr_pot]
+
+      final_info[topr_pot, ] <- do.call(rbind, lapply(seq_along(topr_top[topr_pot]), FUN = function(x, top, bot, val, sui) {
+        hand_val <- "02"
+        if (!is.null(dim(val))) {
+          top <- top[x]
+          bot <- bot[x]
+          top_su <- sui[x, ][val[x, ] == top]
+          bot_su <- sui[x, ][val[x, ] == bot]
+          kicker <- sort(val[x, ][!val[x, ] %in% c(top, bot)], decreasing = TRUE)[1]
+          kick_suit <- sui[x, ][match(x = kicker, table = val[x, ])][1]
+        } else {
+          top_su <- sui[val == top]
+          bot_su <- sui[val == bot]
+          kicker <- sort(val[!val %in% c(top, bot)], decreasing = TRUE)[1]
+          kick_suit <- sui[match(x = kicker, table = val)][1]
+        }
+        values <- sprintf(c(rep(top, 2), rep(bot, 2), kicker), fmt = "%02s")
+        fin_points <- as.numeric(paste(c(hand_val, values), collapse = ""))
+        fin_cards <- paste(c(paste(top_su, values[1:2], sep = ""), paste(bot_su, values[3:4], sep = ""), paste(kick_suit, values[5], sep = "")), collapse = ", ")
+        hand_type <- "Two Pair"
+        hand_name <- paste("Pair of ", top, "'s and ", bot, "'s", sep = "")
+        data.frame(final_hand_points = fin_points, final_hand = fin_cards, hand_type = hand_type, hand_name = hand_name)
+      }, top = topr_top[topr_pot], bot = topr_bot[topr_pot], val = cards$value[topr_pot, ], sui = cards$suit[topr_pot, ]))
+    }
+    pairs <- pairs[1, , drop = TRUE]
+    not_done <- not_done & is.na(topr_top)
+    if (verbose) {print(sum(not_done))}
+
+    ### Pair ###
+    doubles <- rep(NA_integer_, nrow(cards$value))
+    doubles[not_done] <- pairs[not_done]
+    doubles_found <- !is.na(doubles)
+
+    final_info[doubles_found, ] <- do.call(rbind, lapply(seq_along(doubles[doubles_found]), FUN = function(x, two, val, sui) {
+      hand_val <- "01"
+      if (!is.null(dim(val))) {
+        two <- two[x]
+        bi_su <- sui[x, ][val[x, ] == two]
+        kickers <- sort(val[x, ][val[x, ] != two], decreasing = TRUE)[1:3]
+        kick_suits <- sui[x, ][match(x = kickers, table = val[x, ])][1:3]
+      } else {
+        bi_su <- sui[val == two]
+        kickers <- sort(val[val != two], decreasing = TRUE)[1:3]
+        kick_suits <- sui[match(x = kickers, table = val)][1:3]
+      }
+      values <- sprintf(c(rep(two, 2), kickers), fmt = "%02s")
+      fin_points <- as.numeric(paste(c(hand_val, values), collapse = ""))
+      fin_cards <- paste(c(paste(bi_su, values[1:2], sep = ""), paste(kick_suits, values[3:5], sep = "")), collapse = ", ")
+      hand_type <- "Pair"
+      hand_name <- paste("Pair of ", two, "'s", sep = "")
+      data.frame(final_hand_points = fin_points, final_hand = fin_cards, hand_type = hand_type, hand_name = hand_name)
+    }, two = doubles[doubles_found], val = cards$value[doubles_found, ], sui = cards$suit[doubles_found, ]))
+    not_done <- not_done & is.na(doubles)
+    if (verbose) {print(sum(not_done))}
+
+    ### High Card ###
+    final_info[not_done, ] <- do.call(rbind, lapply(seq_along(not_done[not_done]), FUN = function(x, val, sui) {
+      hand_val <- "00"
+      if (!is.null(dim(val))) {
+        kickers <- sort(val[x, ], decreasing = TRUE)[1:5]
+        kick_suits <- sui[x, ][match(x = kickers, table = val[x, ])][1:5]
+      } else {
+        kickers <- sort(val, decreasing = TRUE)[1:5]
+        kick_suits <- sui[match(x = kickers, table = val)][1:5]
+      }
+      values <- sprintf(kickers, fmt = "%02s")
+      fin_points <- as.numeric(paste(c(hand_val, values), collapse = ""))
+      fin_cards <- paste(paste(kick_suits, values, sep = ""), collapse = ", ")
+      hand_type <- "High Card"
+      hand_name <- paste(max(kickers), "High", sep = " ")
+      data.frame(final_hand_points = fin_points, final_hand = fin_cards, hand_type = hand_type, hand_name = hand_name)
+    }, val = cards$value[not_done, ], sui = cards$suit[not_done, ]))
+
+    if (stage == "flop") {
+      colnames(final_info) <- c("flop_hand_points", "flop_hand", "flop_hand_type", "flop_hand_name")
+    } else if (stage == "turn") {
+      colnames(final_info) <- c("turn_hand_points", "turn_hand", "turn_hand_type", "turn_hand_name")
+    } else {
+      colnames(final_info) <- c("final_hand_points", "final_hand", "final_hand_type", "final_hand_name")
+    }
+
+    return(final_info)
   }
-  
-  # flops <- grepl("card", colnames(round)) & (grepl("pocket", colnames(round)) | grepl("flop", colnames(round)))
-  # round <- cbind(round, score(round = round[, flops], ret = "flop"))
-  # turns <- grepl("card", colnames(round)) & (grepl("pocket", colnames(round)) | 
-  #                                              grepl("flop", colnames(round)) | 
-  #                                              grepl("turn", colnames(round)))
-  # round <- cbind(round, score(round = round[, turns], ret = "turn"))
-  rivers <- grepl("card", colnames(round)) & (grepl("pocket", colnames(round)) | 
-                                                grepl("flop", colnames(round)) | 
-                                                grepl("turn", colnames(round)) |
-                                                grepl("river", colnames(round)))
-  round <- cbind(round, score(round = round[, rivers], ret = "river"))
-  
-  return(round)
+
+
+
+  # flops <- grepl("card", colnames(games)) & (grepl("pocket", colnames(games)) | grepl("flop", colnames(games)))
+  # games <- cbind(games, score(games = games[, flops], ret = "flop"))
+  # turns <- grepl("card", colnames(games)) & (grepl("pocket", colnames(games)) |
+  #                                              grepl("flop", colnames(games)) |
+  #                                              grepl("turn", colnames(games)))
+  # games <- cbind(games, score(games = games[, turns], ret = "turn"))
+  rivers <- grepl("card", colnames(games)) & (grepl("pocket", colnames(games)) |
+                                                grepl("flop", colnames(games)) |
+                                                grepl("turn", colnames(games)) |
+                                                grepl("river", colnames(games)))
+  games <- cbind(games, score(dealt_cards = games[, rivers], stage = "river"))
+
+  return(games)
 }
 #########################################################################################################################
 #########################################################################################################################
