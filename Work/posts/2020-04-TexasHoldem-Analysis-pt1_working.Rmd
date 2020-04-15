@@ -2,7 +2,7 @@
 title: Introduction to Texas Hold'em
 author: Christopher Maerzluft
 date: '2020-04-08'
-slug: intro-poker-data
+slug: poker-analysis-pt1
 categories: []
 tags: ['Texas Holdem', 'Introduction', 'Analysis', 'Descriptive Statistics']
 header:
@@ -12,15 +12,13 @@ header:
 
 ```{r setup, include = FALSE}
 # Location
-# if (!any(grepl("post-topics", list.files()))) {
-#   print("HERE")
-#   knitr::opts_knit$set(root.dir = "..")
-# } else {
-#   knitr::opts_knit$set(root.dir = "external_data/git-blogdown-workflow/")
-# }
+if (any(grepl("Blog.Rproj", list.files()))) {
+  pathtofile <- "content/post/post-topics/TexasHoldEm/Work/results"
+} else {
+  pathtofile <- "Work/results"
+}
 
-# print
-load("Work/results/2020-01-TexasHoldem-Analysis-pt1.Rdata")
+load(sprintf("%s/2020-01-TexasHoldem-Analysis-pt1.Rdata", pathtofile))
 ```
 
 ## Poker! I Barely Know her!
