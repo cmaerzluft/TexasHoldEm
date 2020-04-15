@@ -1,3 +1,5 @@
 ^TexasHoldEm\.Rproj$
 ^\.Rproj\.user$
 ^README\.Rmd$
+^Work$
+^data-raw$
