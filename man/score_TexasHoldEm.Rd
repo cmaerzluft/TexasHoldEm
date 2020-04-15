@@ -4,7 +4,7 @@
 \alias{score_TexasHoldEm}
 \title{Score a hand or hands of Texas Hold'em}
 \usage{
-score_TexasHoldEm(games)
+score_TexasHoldEm(games, verbose = FALSE)
 }
 \arguments{
 \item{games}{a dealt hand of Texas Hold'Em from deal_TexasHoldEm}
@@ -29,4 +29,7 @@ Each hand is given a score based on their 7 cards available
     card breaks subsequent tie, highest 5th card breaks subsequent tie)
 0 - High card (HC): Self explanatory (highest card breaks tie, highest 2nd card breaks subsequent tie, ...,
     highest 5th card breaks subsequent tie)
+}
+\note{
+This can be turned into the list version by simply changing games to games\[\["players"\]\]
 }

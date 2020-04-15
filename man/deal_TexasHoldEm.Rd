@@ -2,25 +2,31 @@
 % Please edit documentation in R/deal_TexasHoldEm.R
 \name{deal_TexasHoldEm}
 \alias{deal_TexasHoldEm}
-\title{Deal a round of Texas Hold'em}
+\title{Deal a hand of Texas Hold'em}
 \usage{
-deal_TexasHoldEm(round, cards)
+deal_TexasHoldEm(cards, empty_table)
 }
 \arguments{
-\item{round}{a data frame with a row for each player in the hand. Though not required I include a hand ID and a player
-ID for later use. The hand ID is the same for all players and the player ID is unique to each player.}
-
 \item{cards}{a vector with every possible card code stored in card_cd. If you are playing with one deck this will have
 52 rows and card_cd should uniquely identify cards. To play with multiple decks just concatenate multiple
 decks.}
+
+\item{empty_table}{a data frame with a row for each player in the hand. Though not required I include a hand ID and a
+player ID for later use. The hand ID is the same for all players and the player ID is unique to each player.}
 }
 \value{
-a data frame with the original round input plus unique pocket cards for each row and community cards that are
-          the same for everyone.
+a data frame with the original empty_table input plus unique pocket cards for each row and community cards that
+          are the same for everyone.
 }
 \description{
-A function for simulating a deal to the number of players in the round. This mimics regulation Texas Hold'em exactly,
-  including burning cards and dealing in order. Since we are using the closest thing to random a computer can possibly
-  get, those things shouldn't really matter that much but I want to include them anyways. At realistic deck sizes,
-  they don't cost much.
+A function for simulating a deal to the number of players in the round. This mimics regulation Texas
+  Hold'em exactly, including burning cards and dealing in order. Since we are using the closest thing to random a
+  computer can possibly get, those things shouldn't really matter that much but I want to include them anyways. At
+  realistic deck sizes, they don't cost much.
+}
+\note{
+Things to try exploring in the future with respect to this code:
+        1) Does burning a card influence outcomes? (remove burn code)
+        2) Does dealing one card to each player before dealing a second card influence outcomes (switch byrow to FALSE)
+       In the future this function would not be exported.
 }
