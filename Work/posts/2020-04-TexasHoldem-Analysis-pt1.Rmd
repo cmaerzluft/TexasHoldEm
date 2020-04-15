@@ -10,45 +10,17 @@ header:
   image: ''
 ---
 
-```{r setup, cache = TRUE, include = FALSE, warning = FALSE, cache.lazy = FALSE}
+```{r setup, include = FALSE}
 # Location
-print(getwd())
-if (!any(grepl("data-raw", list.files()))) {
-  knitr::opts_knit$set(root.dir = "~/Desktop/Miscellaneous/Data Blog/TexasHoldEm")
-  setwd("../..")
-}
-print(getwd())
-# Libraries Needed
-library(dplyr)
-library(tidyr)
-library(ggplot2)
-library(scales)
-library(wesanderson)
-library(knitr)
-library(kableExtra)
-options(scipen = 999)
-# Load data
-datasize <- 1
-units <- "M"
-files <- grep(sprintf("sim%s%sgames", datasize, units), list.files("data-raw/TexasHoldEm"), value = TRUE)
+# if (!any(grepl("post-topics", list.files()))) {
+#   print("HERE")
+#   knitr::opts_knit$set(root.dir = "..")
+# } else {
+#   knitr::opts_knit$set(root.dir = "external_data/git-blogdown-workflow/")
+# }
 
-# Make sure 10 is moved to last spot
-files <- files[order(nchar(files), files)]
-games_list <- list()
-for (i1 in files) {
-  print(i1)
-  load(sprintf("data-raw/TexasHoldEm/%s", i1))
-  name <- gsub(sprintf("sim%s%sgames_", datasize, units), "", i1)
-  name <- gsub("players.Rdata", "", name)
-  games_list[[sprintf("players%s", name)]] <- games
-}
-print(summary(games_list))
-# Prep hand type
-hand_lvls <- c("Straight Flush", "Four of a Kind", "Full House", "Flush", "Straight", "Three of a Kind", "Two Pair", "Pair", "High Card")
-games_list <- lapply(games_list, function(x) {
-  x$final_hand_type <- factor(x$final_hand_type, levels = hand_lvls)
-  return(x)
-})
+# print
+load("Work/results/2020-01-TexasHoldem-Analysis-pt1.Rdata")
 ```
 
 ## Poker! I Barely Know her!
@@ -68,11 +40,6 @@ One of the great things about simulating data is that we can control the data in
 ![](https://media.tenor.com/images/b4bf5e9b067a1bc9da46453eb0d67ac5/tenor.gif)
 
 ## Getting a Baseline
-
-```{r baseline, dependson = 'setup'}
-t1 <- prop.table(table(games_list[[7]]$final_hand_type))
-t1 <- sprintf("%0.4f%%", t1*100)
-```
 
 Having created our dataset, a good first step is to make sure our data aligns with the expected results from the theoretical probabilistic model. The next table shows the [expected distribution](https://en.wikipedia.org/wiki/Poker_probability#Frequency_of_7-card_poker_hands) of final hands verse the estimated distribution from our simulated data. If the Expected results and Estimated results were significantly different we would worry that either our coding was wrong or that we weren't working with enough data. The former would require us to find the error in the code but the latter we can deal with (and will explore in a future post). Fortunately, the results line up really well with our eight millions hands of poker.
 
