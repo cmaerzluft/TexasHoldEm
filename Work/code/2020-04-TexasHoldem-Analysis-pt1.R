@@ -46,7 +46,7 @@ for (i1 in files) {
 
 #########################################################################################################################
 # Plot Options ##########################################################################################################
-plt_background <- "#2f2f3a"
+plt_background <- "#272935"
 plt_wordscolor <- "white"
 plt_colorscale <- wes_palette("Zissou1", 100, type = "continuous")
 plt_colordiscr5 <- wes_palette("Zissou1", 5, type = "discrete")
