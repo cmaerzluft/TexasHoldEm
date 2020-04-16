@@ -53,7 +53,7 @@ plt_colordiscr5 <- wes_palette("Zissou1", 5, type = "discrete")
 plt_colordiscr6 <- c("#8c510a", "#d8b365", "#f6e8c3", "#c7eae5", "#5ab4ac", "#01665e")
 
 plt_theme <- theme(
-  plot.background = element_rect(fill = plt_background),
+  plot.background = element_rect(fill = plt_background, colour = plt_background),
   plot.title = element_text(hjust = 0.5, size = 24, colour = plt_wordscolor),
   plot.subtitle = element_text(hjust = 0.5, size = 18, colour = plt_wordscolor),
   plot.caption = element_text(hjust = 0, size = 12, colour = plt_wordscolor),
