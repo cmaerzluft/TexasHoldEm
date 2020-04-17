@@ -35,8 +35,8 @@ options(scipen = 999)
 #########################################################################################################################
 # Load Data #############################################################################################################
 n_players_index <- 8 - 1
-datasize <- 5
-units <- "k"
+datasize <- 1
+units <- "M"
 files <- grep(sprintf("sim%s%sgames", datasize, units), list.files("data-raw/TexasHoldEm"), value = TRUE)
 # Make sure 10 is moved to last spot
 files <- files[order(nchar(files), files)]
@@ -114,11 +114,8 @@ hand_win_tables <- lapply(games_list, function(x) {
 })
 # Plot
 hand_win_plots <- lapply(seq_along(hand_win_tables), function(x, df_list, name) {
-  df_list <- hand_win_tables
-  x <- 1
-  name <- names(hand_win_tables)
   tmp_dta <- df_list[[x]]
-  title <- paste(gsub("players", "", name[x]), "Players", sep = " ")
+  # title <- paste(gsub("players", "", name[x]), "Players", sep = " ")
   # p <- ggplot(data = tmp_dta) +
   #   geom_bar(aes(x = Hand, y = Percentage, fill = Comparison), stat = "identity", position = "dodge") +
   #   geom_hline(yintercept = c(1, .75, .5, .25), linetype = "dashed", color = plt_wordscolor) +
@@ -190,9 +187,16 @@ hand_win_plots <- lapply(seq_along(hand_win_tables), function(x, df_list, name) 
       paste(gsub("players", "", name[x]), "Players", sep = " "),
       size = 24,
       color = plt_wordscolor,
-      fontface = 'bold'
+      fontface = "bold"
     ) +
-    plt_theme
+    draw_line(
+      c(0, 1), c(0.000000001, 0.000000001),
+      color = plt_wordscolor,
+      size = 2
+    ) + theme(
+      plot.background = element_rect(fill = plt_background, colour = plt_background)
+    )
+
   plots <- plot_grid(g1, g.mid, g2, nrow = 1, rel_widths = c(45/100, 15/100, 45/100))
   p <- plot_grid(title, plots, ncol = 1, rel_heights = c(0.1, 1))
 
