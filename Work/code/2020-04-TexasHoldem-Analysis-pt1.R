@@ -29,13 +29,14 @@ library(scales)
 library(wesanderson)
 library(grid)
 library(gridExtra)
+library(cowplot)
 options(scipen = 999)
 
 #########################################################################################################################
 # Load Data #############################################################################################################
 n_players_index <- 8 - 1
-datasize <- 1
-units <- "M"
+datasize <- 5
+units <- "k"
 files <- grep(sprintf("sim%s%sgames", datasize, units), list.files("data-raw/TexasHoldEm"), value = TRUE)
 # Make sure 10 is moved to last spot
 files <- files[order(nchar(files), files)]
@@ -113,8 +114,11 @@ hand_win_tables <- lapply(games_list, function(x) {
 })
 # Plot
 hand_win_plots <- lapply(seq_along(hand_win_tables), function(x, df_list, name) {
+  df_list <- hand_win_tables
+  x <- 1
+  name <- names(hand_win_tables)
   tmp_dta <- df_list[[x]]
-  # title <- paste(gsub("players", "", name[x]), "Players", sep = " ")
+  title <- paste(gsub("players", "", name[x]), "Players", sep = " ")
   # p <- ggplot(data = tmp_dta) +
   #   geom_bar(aes(x = Hand, y = Percentage, fill = Comparison), stat = "identity", position = "dodge") +
   #   geom_hline(yintercept = c(1, .75, .5, .25), linetype = "dashed", color = plt_wordscolor) +
@@ -180,11 +184,17 @@ hand_win_plots <- lapply(seq_along(hand_win_tables), function(x, df_list, name) 
     ) +
     plt_theme +
     coord_flip()
-  gg1 <- ggplot_gtable(ggplot_build(g1))
-  gg2 <- ggplot_gtable(ggplot_build(g2))
-  gg.mid <- ggplot_gtable(ggplot_build(g.mid))
 
-  p <- arrangeGrob(gg1, gg.mid, gg2, ncol = 3, widths = c(45/100, 15/100, 45/100))
+  title <- ggdraw() +
+    draw_label(
+      paste(gsub("players", "", name[x]), "Players", sep = " "),
+      size = 24,
+      color = plt_wordscolor,
+      fontface = 'bold'
+    ) +
+    plt_theme
+  plots <- plot_grid(g1, g.mid, g2, nrow = 1, rel_widths = c(45/100, 15/100, 45/100))
+  p <- plot_grid(title, plots, ncol = 1, rel_heights = c(0.1, 1))
 
   return(p)
 }, df_list = hand_win_tables, name = names(hand_win_tables))
