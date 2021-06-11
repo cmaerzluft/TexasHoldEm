@@ -24,6 +24,9 @@
 #' @return Each hand is given a score based on their 7 cards available
 #' @export
 score_TexasHoldEm <- function(games, verbose = FALSE) {
+  UseMethod(score_TexasHoldEm)
+}
+score_TexasHoldEm.base <- function(games, verbose = FALSE) {
   if (verbose) {print("Pocket Information")}
   # Pocket Hand Information ----------------------------------------
   # Pull values/suits of Pocket Cards
@@ -75,6 +78,8 @@ score_TexasHoldEm <- function(games, verbose = FALSE) {
 #   margin in apply. Thus theoretically an apply within an apply would have a similar result
 # suits <- function(x) x %/% 100
 # suits_vec <- Vectorize(suits, "x")
+# deal_cards_vec <- Vectorize(deal_cards, vectorize.args = "hand_id", SIMPLIFY = FALSE)
+# games <- do.call(rbind, deal_cards_vec(n_players = 5, hand_id = 1:1000))
 # games2 <- games[sample(nrow(games), 100*1, replace = T), ]
 # Timing <- bench::mark(check = FALSE,
 #                       app = {
@@ -84,8 +89,11 @@ score_TexasHoldEm <- function(games, verbose = FALSE) {
 #                         games2$pocket_card1 %/% 100
 #                         games2$pocket_card2 %/% 100
 #                       },
+#                       vec_sep2 = {
+#                         suits(games2$pocket_card1)
+#                         suits(games2$pocket_card2)
+#                       },
 #                       vec_fn = {
-#                         suits_vec <- Vectorize(suits, "x")
 #                         suits_vec(games2[, c("pocket_card1", "pocket_card2")])
 #                       }
 # )
@@ -102,7 +110,6 @@ score_TexasHoldEm <- function(games, verbose = FALSE) {
 #                        games2$pocket_card2 %/% 100
 #                      },
 #                      vec_fn = {
-#                        suits_vec <- Vectorize(suits, "x")
 #                        suits_vec(games2[, c("pocket_card1", "pocket_card2")])
 #                      }
 #   )

@@ -30,7 +30,7 @@ IRC Poker Logs (Texas Hold'em, Omaha/8 and 7-Stud/8)
                 #tourney        No-limit holdem tournaments
                 
                 Anybody could join IRC and get 1000 in chips for free, but some channels had
-                minimum buyins greater than 1000.  Pplayers had to win chips by playing on the
+                minimum buyins greater than 1000.  Players had to win chips by playing on the
                 smaller limit tables to be able to play on the higher limit tables.  This
                 scarcity of chips made them valuable and encouraged people to play their best
                 game.

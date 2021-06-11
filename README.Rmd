@@ -27,14 +27,33 @@ You can install the development version from [GitHub](https://github.com/) with:
 # install.packages("devtools")
 # devtools::install_github("cmaerzluft/TexasHoldEm")
 ```
-## To do
-1) Develope code that determines how close a hand is to being made using what is available
-  a) for example, if someone has a 2, 3, 5, & 6. The code should say one card away from a straight
-2) Develope code that figures out how many potential hands can beat the current hand using the community cards plus two unknown cards.
-  a) for example, if I have a straight is it possible for a higher straight to exist? or can someone make a flush with the cards in the community pile
-3) Start working with the real data
-  a) will need to model betting - including bluffing and stuff
-  b) will need to figure out how to handle censored data
-4) Start exploring adversarial networks
 
+Rename "fn2()" to "fn()" and remove old fn() function, Applies to:
+* score_flush/score_flush2 and score_games (which calls score_flush2)
+* score_pair/score_pair2 and score_games (which calls score_pair2)
+
+## To do
+A) Code for number of outs to make a better hand
+  a) need to include code to save actual outs (e.g. 307, 214, etc.) if possible
+B) Test pull_value_nonvec vs pull_value - see pull_values_suits.R
+C) Versions of code in base R, dplyr/tidyr, dtplyr, and data.table for speed comparison
+D) Start working with the real data
+  a) will need to model betting - including bluffing and stuff. Don't need to figure out each individual bet though
+  b) will need to figure out how to handle censored data
+E) Develop code that determines how close a hand is to being made using what is available
+  a) for example, if someone has a 2, 3, 5, & 6. The code should say one card away from a straight.
+F) Develop code that figures out how many potential hands can beat the current hand using the community cards plus two unknown cards.
+  a) for example, if I have a straight is it possible for a higher straight to exist? or can someone make a flush with the cards in the community pile
+  b) want to include a prediction for someone's range based on their betting pattern?
+G) Start exploring adversarial networks
+
+
+Agent based model:
+Need to model a players likelihood of check/raise/fold
+function(opponent possible hands, P(bluffing), P(successful bluff), change of getting a better hand)
+Need to model a players hand range:
+possible_hands = function(P(bluffing), previous_bets*weights_previous/pot_size or bank_size)
+P(bluffing) - should be truncated normal with min = 0, max = 1, 
+  calibrated average (how aggressive a player is) and calibrated standard deviation (how predictable are they)
+  should be a function of community card characteristics
 

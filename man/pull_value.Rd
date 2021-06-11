@@ -16,3 +16,6 @@ x %% 100 which gives the tens and ones digits, i.e. the card value
 \description{
 Pull Values
 }
+\note{
+Since it depends on how the card deck is defined, this function won't be exported
+}

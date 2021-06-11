@@ -2,41 +2,26 @@
 % Please edit documentation in R/new_hand.R
 \name{new_hand}
 \alias{new_hand}
-\title{Create a new hand of Texas Hold'em}
+\title{Deal the hands for a series of Texas Hold'em games}
 \usage{
-new_hand(
-  cards,
-  chairs = NULL,
-  player_ids = NULL,
-  hand_id = NULL,
-  auto_fill = TRUE
-)
+new_hand(empty_table, cards, n_hands, n_players)
 }
 \arguments{
-\item{cards}{A vector with all the cards available to deal in the new hand}
+\item{empty_table}{An empty data.frame/tibble/data.table with a row for each hand and player. Most easily created using
+the deal_cards function to ensure the format and class is correct.}
 
-\item{chairs}{The number of players you wish to have in the game}
+\item{cards}{a vector with every possible card code stored in card_cd. If you are playing with one deck this will have
+52 rows and card_cd should uniquely identify cards. To play with multiple decks just concatenate multiple
+decks.}
 
-\item{player_ids}{A vector of IDs for each player you wish to be in the game}
+\item{n_hands}{The number of hands to produce}
 
-\item{hand_id}{An ID for the hand being played}
-
-\item{auto_fill}{If the number of chairs available is greater than length(player_ids), should we auto-generate new
-players to fill all the chairs}
+\item{n_players}{The number of players in each hand}
 }
 \value{
-a list with two empty data.frames. players which has one row for n_players and holds each players pocket cards
-         and community which has places for the 5 community cards of the game.
+a data frame/tibble/data.table with the original empty_table input plus unique pocket cards for each row and
+          community cards that are the same for everyone.
 }
 \description{
-This is designed so that multiple games can be done in the same object.
-}
-\note{
-Things we need to do/consider still:
-       1) build a function that can join multiple rounds together (rbind method)
-       2) Should this be turned into an explicit new class?
-       3) Do we need to make a more auto-generated unique player_id - the idea being that if we want to simulate
-           players in a tournament, we want to make sure they all have unique IDs. Though, we could create all the
-           IDs and feed it to the function ourselves.
-       4) Should we include a game_id as well? We could just do that ourselves
+A function for simulating a deal to a set number of players in a set number of rounds.
 }

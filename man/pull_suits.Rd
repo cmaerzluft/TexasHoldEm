@@ -16,3 +16,6 @@ x %/% 100 which gives the 100 hundreds digit value, i.e. the suit
 \description{
 Pull Suits
 }
+\note{
+Since it depends on how the card deck is defined, this function won't be exported
+}
